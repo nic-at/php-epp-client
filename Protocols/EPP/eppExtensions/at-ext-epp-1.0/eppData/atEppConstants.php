@@ -36,7 +36,7 @@ class atEppConstants
     const autoHandle = "AUTO";
 
     /* atEppDelete */
-    const domainDeleteScheduleNow = "now";
-    const domainDeleteScheduleExpiration = "expiration";
+    const domainDeleteScheduleNow = 'now';
+    const domainDeleteScheduleExpiration = 'expiration';
 
 }

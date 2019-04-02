@@ -20,7 +20,7 @@ class atEppDomainDeleteExtension extends atEppExtensionChain
     | This can be either 'now' or 'expiration'
     |
     */
-    protected $suExtArguments=[];
+    protected $deleteExtArguments=[];
 
     /**
      * Domain extension part of the atEppExtensionChain
@@ -28,13 +28,14 @@ class atEppDomainDeleteExtension extends atEppExtensionChain
      * @param array $domainExtArguments
      * @param atEppExtensionChain|null $additionalEppExtension
      */
-    public function __construct(array $domainExtArguments=[], atEppExtensionChain $additionalEppExtension=null)
+    public function __construct(array $domainExtArguments=[], atEppExtensionChain $additionalEppExtension = null)
     {
+        $this->validateExtensionChain($domainExtArguments);
         if (!is_null($additionalEppExtension))
         {
             parent::__construct($additionalEppExtension);
         }
-        $this->suExtArguments= $domainExtArguments;
+        $this->deleteExtArguments= $domainExtArguments;
     }
 
     /**
@@ -49,18 +50,42 @@ class atEppDomainDeleteExtension extends atEppExtensionChain
         $atDomainFacets->setAttribute('xmlns:at-ext-domain', atEppConstants::namespaceAtExtDomain);
         $atDomainFacets->setAttribute('xsi:schemaLocation', atEppConstants::schemaLocationAtExtDomain);
 
-        if (isset($this->suExtArguments['schedule_date']))
+        if (isset($this->deleteExtArguments['schedule_date']))
         {
             /* No attributre name for schedule-date, see: http://www.nic.at/xsd/at-ext-domain-1.0 */
             $scheduleDate = $request->createElement('at-ext-domain:scheduledate');
-            $scheduleDate->appendChild(new \DOMText($this->suExtArguments['schedule_date']));
+            $scheduleDate->appendChild(new \DOMText($this->deleteExtArguments['schedule_date']));
+            $atDomainFacets->appendChild($scheduleDate);
         }
 
-        $extension->appendchild($atDomainFacets);
+        $extension->appendChild($atDomainFacets);
 
         if (!is_null($this->additionalEppExtension))
         {
             $this->additionalEppExtension->setEppRequestExtension($request, $extension);
         }
+    }
+
+    /**
+     * Validates the extension parameter against the allowed values;
+     *
+     * @param $atEppExtensionChain
+     * @throws \atEppException, If the the request contained an invalid parameter.
+     */
+    protected function validateExtensionChain($arguments)
+    {
+        if (
+            $arguments != null &&
+            (
+                0 == strcmp($arguments['schedule_date'], atEppConstants::domainDeleteScheduleNow) ||
+                0 == strcmp($arguments['schedule_date'], atEppConstants::domainDeleteScheduleExpiration)
+            )
+
+        ) return;
+
+        throw new \atEppException(
+            "Invalid parameter for schedule date in domain delete request extension. Must be either \n" .
+            "Value must be either" . atEppConstants::domainDeleteScheduleNow . " or " . atEppConstants::domainDeleteScheduleExpiration
+        );
     }
 }

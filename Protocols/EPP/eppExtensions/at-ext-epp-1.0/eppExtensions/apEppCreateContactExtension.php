@@ -6,9 +6,9 @@ class apEppCreateContactExtension extends atEppExtensionChain
 {
     protected $atEppContact=null;
 
-    function __construct(atEppContact $atEppContact, atEppExtensionChain $additionaEppExtension=null) {
-        if(!is_null($additionaEppExtension)) {
-            parent::__construct($additionaEppExtension);
+    function __construct(atEppContact $atEppContact, atEppExtensionChain $additionalEppExtension=null) {
+        if(!is_null($additionalEppExtension)) {
+            parent::__construct($additionalEppExtension);
         }
         $this->atEppContact = $atEppContact;
     }
