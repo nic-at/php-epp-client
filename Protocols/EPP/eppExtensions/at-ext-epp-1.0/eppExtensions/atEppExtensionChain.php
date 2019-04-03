@@ -13,7 +13,7 @@ abstract class atEppExtensionChain
 
     function __construct(atEppExtensionChain $additionalEppExtension=null) {
 
-        $this->additionaEppExtension = $additionalEppExtension;
+        $this->additionalEppExtension = $additionalEppExtension;
     }
 
     public function setEppRequestExtension(eppRequest $request,\DOMElement $extension)
