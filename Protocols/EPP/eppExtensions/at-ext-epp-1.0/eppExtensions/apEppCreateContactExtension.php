@@ -25,9 +25,9 @@ class apEppCreateContactExtension extends atEppExtensionChain
         $facet_->appendChild(new \DOMText($this->atEppContact->getPersonType()));
         $contactExt_->appendChild($facet_);
         $extension->appendchild($contactExt_);
-        if(!is_null($this->additionaEppExtension))
+        if(!is_null($this->additionalEppExtension))
         {
-            $this->additionaEppExtension->setEppRequestExtension($request,$extension);
+            $this->additionalEppExtension->setEppRequestExtension($request,$extension);
         }
 
 
