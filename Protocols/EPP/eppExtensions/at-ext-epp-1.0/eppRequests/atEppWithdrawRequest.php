@@ -20,10 +20,13 @@ class atEppWithdrawRequest extends eppRequest
 {
     use atEppCommandTrait;
 
-    function __construct(eppDomain $withdrawDomain, bool $zoneDeletion) {
+    function __construct(eppDomain $withdrawDomain, bool $zoneDeletion, atEppExtensionChain $atEppExtensionChain = null)
+    {
+        $this->atEppExtensionChain = $atEppExtensionChain;
         parent::__construct();
 
         $this->setDomain($withdrawDomain, $zoneDeletion);
+        $this->setAtExtensions();
         $this->addSessionId();
     }
 
