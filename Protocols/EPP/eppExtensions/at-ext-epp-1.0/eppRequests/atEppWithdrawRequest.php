@@ -16,4 +16,24 @@ namespace Metaregistrar\EPP;
 class atEppWithdrawRequest extends eppRequest
 {
 
+    /**
+     * atEppWithdrawRequest constructor.
+     * @param $arguments
+     *
+     * @throws \atEppException
+     */
+    public function __construct($arguments)
+    {
+        $this->validateArguments($arguments);
+        parent::__construct();
+    }
+
+    protected function validateArguments($arguments)
+    {
+        if (! key_exists('domain_name', $arguments) || ! key_exists('zone_deletion', $arguments))
+        {
+            throw new \atEppException(
+                'atEppWithdrawRequest requires two arguments domain_name:string and zone_deletion:boolean.');
+        }
+    }
 }
