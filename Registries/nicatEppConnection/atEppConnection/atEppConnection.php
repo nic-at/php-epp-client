@@ -33,6 +33,7 @@ class atEppConnection extends nicatEppConnection {
         parent::addCommandResponse('Metaregistrar\EPP\eppInfoDomainRequest', 'Metaregistrar\EPP\atEppInfoDomainResponse');
         parent::addCommandResponse('Metaregistrar\EPP\eppInfoContactRequest', 'Metaregistrar\EPP\atEppInfoContactResponse');
         parent::addCommandResponse('Metaregistrar\EPP\atEppWithdrawRequest', 'Metaregistrar\EPP\atEppWithdrawResponse');
+        parent::addCommandResponse('Metaregistrar\EPP\atEppUndeleteRequest', 'Metaregistrar\EPP\atEppUndeleteResponse');
     }
 
 
