@@ -182,10 +182,10 @@ class eppResponse extends \DOMDocument {
             }
             if ((is_array($this->exceptions)) && (count($this->exceptions)>0)) {
                 foreach ($this->exceptions as $exceptionhandler) {
-                    throw new $exceptionhandler($errorstring, $resultcode, null, $resultreason, $this->saveXML());
+                    throw new $exceptionhandler($errorstring, $resultcode, null, $resultreason, $this->saveXML(), $this);
                 }
             } else {
-                throw new eppException($errorstring, $resultcode, null, $resultreason, $this->saveXML());
+                throw new eppException($errorstring, $resultcode, null, $resultreason, $this->saveXML(), $this);
             }
 
         } else {
@@ -212,7 +212,7 @@ class eppResponse extends \DOMDocument {
 
     /**
      *
-     * @return string|null
+     * @return null|string
      */
     public function getResultCode() {
         $result = $this->queryPath('/epp:epp/epp:response/epp:result/@code');
@@ -390,6 +390,9 @@ class eppResponse extends \DOMDocument {
         }
     }
 
+    /**
+     * @param $exceptionhandler
+     */
     public function addException($exceptionhandler) {
         $this->exceptions[] = $exceptionhandler;
     }

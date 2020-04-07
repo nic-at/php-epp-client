@@ -399,13 +399,17 @@ class eppConnection {
      * @throws eppException
      */
     public function logout() {
-        $logout = new eppLogoutRequest();
-        if ($response = $this->request($logout)) {
-            $this->writeLog("Logged out","LOGOUT");
-            $this->loggedin = false;
-            return true;
+        if ($this->loggedin) {
+            $logout = new eppLogoutRequest();
+            if ($response = $this->request($logout)) {
+                $this->writeLog("Logged out","LOGOUT");
+                $this->loggedin = false;
+                return true;
+            } else {
+                throw new eppException("Logout failed: ".$response->getResultMessage(),0,null,null,$logout->saveXML());
+            }
         } else {
-            throw new eppException("Logout failed: ".$response->getResultMessage(),0,null,null,$logout->saveXML());
+            return true;
         }
     }
 
@@ -437,6 +441,79 @@ class eppConnection {
     }
 
     /**
+     * Enable the readsleep functionality
+     * @var boolean
+     */
+    private $enableReadSleep = true;
+
+    /**
+     * The initial wait time in microseconds between read attempts
+     * @var integer
+     */
+    private $readSleepTimeInitialValue = 100;
+
+    /**
+     * The maximum time between read attempts in microseconds
+     * @var integer
+     */
+    private $readSleepTimeLimit = 100000;
+
+    /**
+     * When using the readsleep incrementor, increment the sleep time with incrementor value 1 until the
+     * the sleep time exceeds this value is exceeded then switch to the second incrementor value
+     * @var integer
+     */
+    private $readSleepTimeIncrementorLimit = 10000;
+
+    /**
+     * Enable the read sleep incrementor
+     * @var boolean
+     */
+    private $readSleepTimeIncrementEnabled = true;
+
+    /**
+     * The initial incrementor value
+     * @var integer
+     */
+    private $readSleepTimeIncrementor1 = 1000;
+
+    /**
+     * The second incrementor value
+     * @var integer
+     */
+    private $readSleepTimeIncrementor2 = 100;
+
+    /**
+     * Allows the ability turn off or tweak the response read timings.
+     * Disabling the readSleep will result in high CPU usage when waiting for a response from the epp server
+     *
+     * @param boolean $enableReadSleep
+     * @param boolean $incrementorEnabled
+     * @param integer  $initialReadSleepTime
+     * @param integer  $limit
+     * @param integer  $readSleepTimeIncrementorLimit
+     * @param integer  $incrementor1
+     * @param integer  $incrementor2
+     */
+    public function setReadTimings(
+        $enableReadSleep = true,
+        $incrementorEnabled = true,
+        $initialReadSleepTime = 100,
+        $limit = 100000,
+        $readSleepTimeIncrementorLimit = 10000,
+        $incrementor1 = 1000,
+        $incrementor2 = 100
+    ) {
+        $this->enableReadSleep = $enableReadSleep;
+        $this->readSleepTimeInitialValue = $initialReadSleepTime;
+        $this->readSleepTimeLimit = $limit;
+        $this->readSleepTimeIncrementorLimit = $readSleepTimeIncrementorLimit;
+        $this->readSleepTimeIncrementEnabled = $incrementorEnabled;
+        $this->readSleepTimeIncrementor1 = $incrementor1;
+        $this->readSleepTimeIncrementor2 = $incrementor2;
+    }
+
+    /**
      * This will read 1 response from the connection if there is one
      * @param boolean $nonBlocking to prevent the blocking of the thread in case there is nothing to read and not wait for the timeout
      * @return string
@@ -462,17 +539,38 @@ class eppConnection {
                 $readLength = 4;
                 //$readbuffer = "";
                 $read = "";
+                $useSleep = $this->enableReadSleep;
+                $readSleepTime = $this->readSleepTimeInitialValue;
+                $readSleepTimeLimit = $this->readSleepTimeLimit;
+                $readSleepTimeIncrementorLimit = $this->readSleepTimeIncrementorLimit;
+                $readSleepTimeIncrementEnabled = $this->readSleepTimeIncrementEnabled;
+                $readSleepTimeIncrementor1 = $this->readSleepTimeIncrementor1;
+                $readSleepTimeIncrementor2 = $this->readSleepTimeIncrementor2;
+//                $loops = 0;
                 while ($readLength > 0) {
+//                    $loops++;
                     if ($readbuffer = fread($this->connection, $readLength)) {
                         $readLength = $readLength - strlen($readbuffer);
                         $read .= $readbuffer;
                         $time = time() + $this->timeout;
+                    } elseif ($useSleep) {
+                        usleep($readSleepTime);
+                        if ($readSleepTimeIncrementEnabled) {
+                            if ($readSleepTime < $readSleepTimeLimit) {
+                                if ($readSleepTime > $readSleepTimeIncrementorLimit) {
+                                    $readSleepTime += $readSleepTimeIncrementor2;
+                                } else {
+                                    $readSleepTime += $readSleepTimeIncrementor1;
+                                }
+                            }
+                        }
                     }
                     //Check if timeout occured
                     if (time() >= $time) {
                         return false;
                     }
                 }
+                //$this->writeLog("Used $loops loops to read initial 4 bytes","READ");
                 //$this->writeLog("Read 4 bytes for integer. (read: " . strlen($read) . "):$read","READ");
                 $length = $this->readInteger($read) - 4;
                 //$this->writeLog("Reading next: $length bytes","READ");
@@ -1110,12 +1208,16 @@ class eppConnection {
             $text = $this->hideTextBetween($text,'<clID>','</clID>');
             // Hide password in the logging
             $text = $this->hideTextBetween($text,'<pw>','</pw>');
-            // Hide password in the logging
             $text = $this->hideTextBetween($text,'<pw><![CDATA[',']]></pw>');
             // Hide new password in the logging
             $text = $this->hideTextBetween($text,'<newPW>','</newPW>');
-            // Hide new password in the logging
             $text = $this->hideTextBetween($text,'<newPW><![CDATA[',']]></newPW>');
+            // Hide domain password in the logging
+            $text = $this->hideTextBetween($text,'<domain:pw>','</domain:pw>');
+            $text = $this->hideTextBetween($text,'<domain:pw><![CDATA[',']]></domain:pw>');
+            // Hide contact password in the logging
+            $text = $this->hideTextBetween($text,'<contact:pw>','</contact:pw>');
+            $text = $this->hideTextBetween($text,'<contact:pw><![CDATA[',']]></contact:pw>');
             //echo "-----".date("Y-m-d H:i:s")."-----".$text."-----end-----\n";
             $log = "-----" . $action . "-----" . date("Y-m-d H:i:s") . "-----\n" . $text . "\n-----END-----" . date("Y-m-d H:i:s") . "-----\n";
             $this->logentries[] = $log;
