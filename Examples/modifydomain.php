@@ -130,7 +130,7 @@ function modifydomain($conn, $domainname, $registrant = null, $admincontact = nu
                 $add->addHost(new eppHost($nameserver));
             }
         }
-        $update = new eppUpdateDomainRequest($domain, $add, $del, $mod);
+        $update = new eppUpdateDomainRequest($domain, $add, $del, $mod, true);
         //echo $update->saveXML();
         if ($response = $conn->request($update)) {
             /* @var eppUpdateDomainResponse $response */
